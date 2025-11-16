@@ -13,12 +13,15 @@ from neuralop.utils import get_wandb_api_key, count_model_params
 from neuralop.mpu.comm import get_local_rank
 from neuralop.training import setup, AdamW
 
+from neuralop.utils import select_gpu
+select_gpu(gpu_id=1)
 
 # Read the configuration
 config_name = "default"
 from zencfg import make_config_from_cli
-import sys 
-sys.path.insert(0, '../')
+import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 from config.navier_stokes_config import Default
 
 config = make_config_from_cli(Default)

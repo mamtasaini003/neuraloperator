@@ -11,20 +11,22 @@ from neuralop.training import setup, AdamW
 from neuralop.utils import get_wandb_api_key, count_model_params, get_project_root
 
 from neuralop.utils import select_gpu
+select_gpu(gpu_id=0)
 
 
 # Read the configuration
-config_name = "default"
+config_name = "default_latent"
 # Read the configuration
 from zencfg import make_config_from_cli 
 import os
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
-from config.burgers_config import Default
+# from config.burgers_config import Default
+from config.burgers_config import DefaultLatent
 
-select_gpu(gpu_id=1)
 
-config = make_config_from_cli(Default)
+
+config = make_config_from_cli(DefaultLatent)
 config = config.to_dict()
 
 # Set-up distributed communication, if using

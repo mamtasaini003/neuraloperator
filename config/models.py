@@ -86,6 +86,48 @@ class FNO_Huge2d(SimpleFNOConfig):
     hidden_channels: int = 128
     projection_channel_ratio: int = 2
 
+class FNOLatentConfig(ModelConfig):
+    model_arch: str = "fno_latent"
+    data_channels: int
+    out_channels: int
+    gno_coord_dim: int
+    gno_coord_embed_dim: int
+    gno_radius: float
+    gno_transform_type: str
+    fno_n_modes: List[int]
+    fno_hidden_channels: int
+    fno_use_channel_mlp: bool = True
+    fno_norm: str = "instance_norm"
+    fno_ada_in_features: int = 32
+    fno_factorization: str = "tucker"
+    fno_rank: float = 1.0
+    fno_domain_padding: float = 0.125
+    fno_use_channel_mlp: bool = True
+    fno_channel_mlp_expansion: float = 1.0
+    fno_resolution_scaling_factor: int = 1
+
+class SimpleFNOLatentConfig(FNOConfig):
+    """
+    SimpleFNOConfig: a basic FNO config that provides access to only
+    the most important FNO parameters.
+    """
+    data_channels: int
+    out_channels: int
+    n_modes: List[int]
+    hidden_channels: int
+    projection_channel_ratio: int
+
+class FNO_Latent_Small2d(SimpleFNOLatentConfig):
+    """
+    FNO_Latent2d: FNO with latent-space loss computation.
+    """
+    model_arch: str = "fno_latent"   # 🔑 This name must match your new model’s class name / registry
+    data_channels: int = 1
+    out_channels: int = 1
+    n_modes: List[int] = [16, 16]
+    hidden_channels: int = 24
+    projection_channel_ratio: int = 2
+
 class FNO_Medium3d(SimpleFNOConfig):
     """
     FNO_Medium3d: a medium FNO for 3d problems.

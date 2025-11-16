@@ -207,11 +207,28 @@ def get_model(config):
     model : nn.Module
         the instanciated module
     """
-    arch = config.model['model_arch'].lower()
-    model_config = config.model
+    # ❗config is a dict-like object, earlier was config.model.model_arch
+    arch = config['model']['model_arch'].lower()
+    # arch = config.model.model_arch.lower()
+    model_config = config['model']
 
-    # Set the number of input channels depending on channels in data + mg patching
-    data_channels = model_config.pop("data_channels")
+    # Only adjust in_channels if 'data_channels' exists (FNO-specific)
+    if "data_channels" in model_config:
+        data_channels = model_config.pop("data_channels")
+        try:
+            patching_levels = config.get("patching", {}).get("levels", 0)
+        except KeyError:
+            patching_levels = 0
+        if patching_levels:
+            data_channels *= patching_levels + 1
+        model_config["in_channels"] = data_channels
+
+    # Dispatch model creation
+    try:
+        return BaseModel._models[arch](**model_config)
+    except KeyError:
+        raise ValueError(f"Got config.arch={arch}, expected one of {available_models()}.")
+
     try:
         patching_levels = config["patching"]["levels"]
     except KeyError:

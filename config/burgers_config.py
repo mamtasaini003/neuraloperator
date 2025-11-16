@@ -3,6 +3,7 @@ from typing import Any, List, Optional
 from zencfg import ConfigBase
 from .distributed import DistributedConfig
 from .models import ModelConfig, FNO_Small2d
+from .models import FNO_Latent_Small2d
 from .opt import OptimizationConfig, PatchingConfig
 from .wandb import WandbConfig
 
@@ -21,7 +22,20 @@ class BurgersDatasetConfig(ConfigBase):
     include_endpoint: List[bool] = [True, False]
 
 class BurgersOptConfig(ConfigBase):
-    n_epochs: int = 10000
+    n_epochs: int = 20000
+    training_loss: str = "l2"
+    testing_loss: str = "l2"
+    learning_rate: float = 1e-4
+    weight_decay: float = 1e-4
+    eval_interval: int = 1
+    mixed_precision: bool = False
+    scheduler: str = 'ReduceLROnPlateau' # Or 'CosineAnnealingLR' OR 'ReduceLROnPlateau'
+    scheduler_patience: int = 100 # For ReduceLROnPlateau only
+    step_size: int = 60
+    gamma: float = 0.5
+
+class BurgersOptConfigLatent(ConfigBase):
+    n_epochs: int = 20000
     training_loss: str = "l2"
     testing_loss: str = "l2"
     learning_rate: float = 1e-4
@@ -40,6 +54,17 @@ class Default(ConfigBase):
     distributed: DistributedConfig = DistributedConfig()
     model: ModelConfig = FNO_Small2d()
     opt: BurgersOptConfig = BurgersOptConfig()
+    data: BurgersDatasetConfig = BurgersDatasetConfig()
+    patching: PatchingConfig = PatchingConfig()
+    wandb: WandbConfig = WandbConfig()
+
+class DefaultLatent(ConfigBase):
+    n_params_baseline: Optional[Any] = None
+    verbose: bool = True
+    arch: str = "fno_latent"
+    distributed: DistributedConfig = DistributedConfig()
+    model: ModelConfig = FNO_Latent_Small2d()
+    opt: BurgersOptConfigLatent = BurgersOptConfigLatent()
     data: BurgersDatasetConfig = BurgersDatasetConfig()
     patching: PatchingConfig = PatchingConfig()
     wandb: WandbConfig = WandbConfig()

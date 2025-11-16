@@ -3,12 +3,13 @@ from typing import Any, List, Optional
 from zencfg import ConfigBase
 from .distributed import DistributedConfig
 from .models import ModelConfig, FNO_Small2d
+from .models import FNO_Latent_Small2d
 from .opt import OptimizationConfig, PatchingConfig
 from .wandb import WandbConfig
 
 
 class DarcyOptConfig(OptimizationConfig):
-    n_epochs: int = 300
+    n_epochs: int = 500
     learning_rate: float = 5e-3
     training_loss: str = "h1"
     weight_decay: float = 1e-4
@@ -35,6 +36,26 @@ class Default(ConfigBase):
     distributed: DistributedConfig = DistributedConfig()
     model: ModelConfig = FNO_Small2d()
     opt: OptimizationConfig = DarcyOptConfig()
+    data: DarcyDatasetConfig = DarcyDatasetConfig()
+    patching: PatchingConfig = PatchingConfig()
+    wandb: WandbConfig = WandbConfig()
+
+class DarcyOptLatentConfig(OptimizationConfig):
+    n_epochs: int = 500
+    learning_rate: float = 5e-3
+    training_loss: str = "h1"
+    weight_decay: float = 1e-4
+    scheduler: str = "StepLR"
+    step_size: int = 60
+    gamma: float = 0.5
+
+class DefaultLatent(ConfigBase):
+    n_params_baseline: Optional[Any] = None
+    verbose: bool = True
+    arch: str = "fno_latent"
+    distributed: DistributedConfig = DistributedConfig()
+    model: ModelConfig = FNO_Latent_Small2d()
+    opt: OptimizationConfig = DarcyOptLatentConfig()
     data: DarcyDatasetConfig = DarcyDatasetConfig()
     patching: PatchingConfig = PatchingConfig()
     wandb: WandbConfig = WandbConfig()

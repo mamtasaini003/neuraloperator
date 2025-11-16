@@ -13,11 +13,14 @@ from neuralop.training import setup, AdamW
 from neuralop.mpu.comm import get_local_rank
 from neuralop.utils import get_wandb_api_key, count_model_params
 
+from neuralop.utils import select_gpu
+select_gpu(gpu_id=0)
 
 # Read the configuration
 from zencfg import make_config_from_cli
-import sys 
-sys.path.insert(0, '../')
+import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 from config.darcy_config import Default
 
 

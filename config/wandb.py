@@ -26,10 +26,17 @@ class WandbConfig(ConfigBase):
         to W&B, if logging to W&B (``log = True``)
 
     """
-    log: bool = False
-    entity: Optional[str] = None
-    project: Optional[str] = None
+    log: bool = True
+    entity: Optional[str] = "mamtapc003-zenteiq-ai"
+    project: Optional[str] = "XYA_Theta_LOAO_Experiment"
     name: Optional[str] = None
     group: Optional[str] = None
     sweep: bool = False
     log_output: bool = True
+
+    # def __post_init__(self):
+    #     self.wandb = {
+    #         "log": True,
+    #         "project": "XYA_Theta_LOAO_Experiment",
+    #         "entity": "mamtapc003-zenteiq-ai-org",
+    #     }
