@@ -106,6 +106,10 @@ def native_neighbor_search(data: torch.Tensor, queries: torch.Tensor, radius: fl
     in_nbr = torch.where(dists > 0, 1., 0.,)
     nbrhd_sizes = torch.cumsum(torch.sum(in_nbr, dim=1), dim=0) # num points in each neighborhood, summed cumulatively
     splits = torch.cat((torch.tensor([0.]).to(queries.device), nbrhd_sizes))
+    # Ensure nbrhd_sizes is 1D
+    # nbrhd_sizes = nbrhd_sizes.view(-1) if nbrhd_sizes.dim() > 1 else nbrhd_sizes
+    # splits = torch.cat((torch.tensor([0.], device=queries.device), nbrhd_sizes))
+
     
     nbr_dict['neighbors_index'] = nbr_indices.long().to(queries.device)
     nbr_dict['neighbors_row_splits'] = splits.long()

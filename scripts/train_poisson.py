@@ -5,19 +5,23 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.nn.functional as F
 
 from neuralop.losses.data_losses import LpLoss, MSELoss
-from neuralop.training import Trainer, setup
+from neuralop.training.trainer_test import Trainer_test
+from neuralop.training import setup
 from neuralop.data.datasets.nonlinear_poisson import load_nonlinear_poisson_pt
 from neuralop.losses.equation_losses import PoissonBoundaryLoss, PoissonEqnLoss
 from neuralop.losses.meta_losses import WeightedSumLoss
 from neuralop.models import get_model
 from neuralop.utils import get_wandb_api_key, count_model_params
 
+from neuralop.utils import select_gpu
+select_gpu(gpu_id=1)
 
 # Read the configuration
 config_name = "default"
 from zencfg import make_config_from_cli
-import sys 
-sys.path.insert(0, '../')
+import os
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 from config.poisson_gino_config import Default
 
 config = make_config_from_cli(Default)
@@ -177,7 +181,7 @@ if config.verbose:
     print(f"\n### Beginning Training...\n")
     sys.stdout.flush()
 
-trainer = Trainer(
+trainer = Trainer_test(
     model=model,
     n_epochs=config.opt.n_epochs,
     data_processor=data_processor,

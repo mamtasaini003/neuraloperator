@@ -8,7 +8,7 @@ from .wandb import WandbConfig
 
 
 class MGNOPoissonOptConfig(OptimizationConfig):
-    n_epochs: int = 1000
+    n_epochs: int = 100
     training_loss: List[str] = ["equation", "boundary"]
     loss_weights: Dict[str, Any] = {'mse': 1.0, 'interior': 1e-2, 'boundary': 1.0}
     pino_method: str = "autograd"
@@ -23,11 +23,11 @@ class MGNOPoissonOptConfig(OptimizationConfig):
     eval_interval: int = 1
 
 class NonlinearPoissonDatasetConfig(ConfigBase):
-    file: str = "~/data/nonlin_poisson/nonlinear_poisson.obj"
+    file: str = "data/nonlinear_poisson/nonlinear_poisson.obj"
     batch_size: int = 1
     test_batch_size: int = 1
     n_train: int = 7000
-    n_test: int = 3000
+    n_test: int = 1
     n_in: int = 5000
     n_out: int = 100
     n_eval: int = 6000

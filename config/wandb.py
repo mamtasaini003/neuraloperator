@@ -27,8 +27,8 @@ class WandbConfig(ConfigBase):
 
     """
     log: bool = True
-    entity: Optional[str] = "mamtapc003-zenteiq-ai"
-    project: Optional[str] = "XYA_Theta_LOAO_Experiment"
+    entity: Optional[str] = "mamta_zenteiq-zenteiq-edtech"
+    project: Optional[str] = "GINO_Experiment"
     name: Optional[str] = None
     group: Optional[str] = None
     sweep: bool = False

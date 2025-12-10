@@ -9,6 +9,7 @@ from torch.cuda import amp
 from torch import nn
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
+import numpy as np
 # Only import wandb and use if installed
 wandb_available = False
 try:
@@ -22,7 +23,7 @@ from neuralop.losses import LpLoss
 from .training_state import load_training_state, save_training_state
 
 
-class Trainer:
+class Trainer_test:
     """
     A general Trainer class to train neural-operators on given datasets. 
 
@@ -366,31 +367,8 @@ class Trainer:
     
     def evaluate(self, loss_dict, data_loader, log_prefix="", epoch=None, mode="single_step", max_steps=None):
         """Evaluates the model on a dictionary of losses
-
-        Parameters
-        ----------
-        loss_dict : dict of functions
-          each function takes as input a tuple (prediction, ground_truth)
-          and returns the corresponding loss
-        data_loader : data_loader to evaluate on
-        log_prefix : str, default is ''
-            if not '', used as prefix in output dictionary
-        epoch : int | None
-            current epoch. Used when logging both train and eval
-            default None
-        mode : Literal {'single_step', 'autoregression'}
-            if 'single_step', performs standard evaluation
-            if 'autoregression' loops through `max_steps` steps
-        max_steps : int, optional
-            max number of steps for autoregressive rollout. 
-            If None, runs the full rollout.
-        Returns
-        -------
-        errors : dict
-            dict[f'{log_prefix}_{loss_name}] = loss for loss in loss_dict
         """
         # Ensure model and data processor are loaded to the proper device
-
         self.model = self.model.to(self.device)
         if self.data_processor is not None and self.data_processor.device != self.device:
             self.data_processor = self.data_processor.to(self.device)
@@ -399,40 +377,122 @@ class Trainer:
         if self.data_processor:
             self.data_processor.eval()
 
-        errors = {f"{log_prefix}_{loss_name}": 0 for loss_name in loss_dict.keys()}
-
-        # Warn the user if any of the eval losses is reducing across the batch
-        for _, eval_loss in loss_dict.items():
-            if hasattr(eval_loss, 'reduction'):
-                if eval_loss.reduction == "mean":
-                    warnings.warn(f"{eval_loss.reduction=}. This means that the loss is "
-                                "initialized to average across the batch dim. The Trainer "
-                                "expects losses to sum across the batch dim.")
-
-        self.n_samples = 0
+        errors = {f"{log_prefix}_{loss_name}": 0.0 for loss_name in loss_dict.keys()}
+        self.n_samples = 0.0
+        
+        # ✅ PRODUCTION: Use FIRST REAL BATCH (guaranteed compatible with model)
+        first_batch_sample = None
+        first_predictions = None
+        
         with torch.no_grad():
+            batch_idx = 0
             for idx, sample in enumerate(data_loader):
-                return_output = False
-                if idx == len(data_loader) - 1:
-                    return_output = True
+                # Get predictions from FIRST batch only (consistent across epochs if shuffle=False)
+                return_output = (idx == 0)
+                
                 if mode == "single_step":
                     eval_step_losses, outs = self.eval_one_batch(sample, loss_dict, return_output=return_output)
                 elif mode == "autoregression":
                     eval_step_losses, outs = self.eval_one_batch_autoreg(sample, loss_dict,
-                                                                         return_output=return_output,
-                                                                         max_steps=max_steps)
+                                                                        return_output=return_output,
+                                                                        max_steps=max_steps)
 
+                # Store first batch for CSV export
+                if return_output and outs is not None:
+                    first_batch_sample = sample  # Raw sample
+                    first_predictions = outs
+                    print(f"✅ Captured first batch (shape: {sample['x'].shape if 'x' in sample else 'N/A'}) for {log_prefix}")
+                    break  # Only need first batch
+                
+                # Safe counting
+                if "y" in sample and isinstance(sample["y"], torch.Tensor):
+                    self.n_samples += float(sample["y"].size(0))
+                else:
+                    self.n_samples += 1.0
+                
+                # Safe accumulation
                 for loss_name, val_loss in eval_step_losses.items():
-                    errors[f"{log_prefix}_{loss_name}"] += val_loss
-        
-        for key in errors.keys():
-            errors[key] /= self.n_samples
+                    errors[f"{log_prefix}_{loss_name}"] += float(val_loss.item())
 
-        # on last batch, log model outputs
-        # if self.log_output and self.wandb_log:
-        #     errors[f"{log_prefix}_outputs"] = wandb.Image(outs)
-        
+            # Continue evaluation on remaining batches
+            for sample in data_loader:
+                if mode == "single_step":
+                    eval_step_losses, _ = self.eval_one_batch(sample, loss_dict, return_output=False)
+                elif mode == "autoregression":
+                    eval_step_losses, _ = self.eval_one_batch_autoreg(sample, loss_dict,
+                                                                    return_output=False,
+                                                                    max_steps=max_steps)
+                
+                if "y" in sample and isinstance(sample["y"], torch.Tensor):
+                    self.n_samples += float(sample["y"].size(0))
+                else:
+                    self.n_samples += 1.0
+                
+                for loss_name, val_loss in eval_step_losses.items():
+                    errors[f"{log_prefix}_{loss_name}"] += float(val_loss.item())
+
+        # Normalize errors
+        if self.n_samples > 0:
+            for key in errors.keys():
+                errors[key] /= self.n_samples
+
+        # ✅ EXPORT FIRST BATCH (model-compatible, deterministic with shuffle=False)
+        if first_predictions is not None and first_batch_sample is not None:
+            filename = f"{log_prefix}_test_true_vs_pred_epoch{epoch if epoch is not None else 'final'}_firstbatch.csv"
+            
+            query_key = None
+            possible_query_keys = ['x', 'x_query', 'query_points', 'points', 'coords', 'input_geom']
+            for key in possible_query_keys:
+                if key in first_batch_sample and torch.is_tensor(first_batch_sample[key]):
+                    query_key = key
+                    break
+            
+            if query_key is not None and 'y' in first_batch_sample:
+                query_points = first_batch_sample[query_key]
+                raw_targets = first_batch_sample['y_domain' if 'y_domain' in first_batch_sample else 'y']
+                
+                # Move to CPU and flatten
+                try:
+                    flat_points = query_points.view(-1, query_points.shape[-1]).cpu().numpy()
+                    flat_true = raw_targets.view(-1).cpu().numpy()
+                    flat_pred = first_predictions.detach().cpu().view(-1).numpy()
+                    
+                    # Ensure lengths match
+                    min_len = min(len(flat_points), len(flat_true), len(flat_pred))
+                    flat_points = flat_points[:min_len]
+                    flat_true = flat_true[:min_len]
+                    flat_pred = flat_pred[:min_len]
+                    
+                    # DYNAMIC HEADER
+                    n_dims = flat_points.shape[1]
+                    header = "true_value,pred_value,error"
+                    for i in range(n_dims):
+                        header += f",coord_{i}"
+                    
+                    # Write CSV
+                    with open(filename, "w") as f:
+                        f.write(header + "\n")
+                        for i in range(min_len):
+                            error = abs(float(flat_pred[i]) - float(flat_true[i]))
+                            row = f"{flat_true[i]:.8f},{flat_pred[i]:.8f},{error:.8f}"
+                            for coord in flat_points[i]:
+                                row += f",{coord:.8f}"
+                            f.write(row + "\n")
+                    
+                    print(f"✅ Saved {min_len} FIRST-BATCH test points ({n_dims}D) to: {filename}")
+                    print(f"   True range: [{flat_true.min():.4f}, {flat_true.max():.4f}]")
+                    print(f"   Pred range: [{flat_pred.min():.4f}, {flat_pred.max():.4f}]")
+                    print(f"   Mean error: {np.mean(np.abs(flat_pred - flat_true)):.6f}")
+                    
+                except Exception as csv_error:
+                    print(f"⚠️ CSV export failed: {csv_error}")
+            else:
+                print(f"⚠️ Missing keys. Query: {query_key}, Available: {list(first_batch_sample.keys())}")
+        else:
+            print(f"⚠️ No first batch captured for CSV export in {log_prefix}")
+
         return errors
+
     
     def on_epoch_start(self, epoch):
         """on_epoch_start runs at the beginning

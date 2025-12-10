@@ -12,7 +12,8 @@ from ..transforms.data_processors import DefaultDataProcessor
 from .web_utils import download_from_zenodo_record
 
 
-path = Path(__file__).resolve().parent.joinpath('data')
+# path = Path(__file__).resolve().parent.joinpath('data')
+path = "/home/mamta/work/neuraloperator/data/nonlinear_poisson/nonlinear_poisson.obj"
 
 def generate_latent_queries(query_res: int, pad: float=0., domain_lims: List[List[float]]=[[-1.4,1.4],[-1.4,1.4]]):
     """generate_latent_queries creates the point cloud of query points in latent space
@@ -193,7 +194,7 @@ class NonlinearPoissonDataset:
         # Load the data
         with open(data_path, 'rb') as data_file:
             data = pickle.load(data_file)
-            print("Dictionary loaded successfully.")
+            print(f"Loaded object of type {type(data)} with length {len(data)}")
         
         random.shuffle(data)
         train_end_idx = int(0.7*len(data))
@@ -517,6 +518,21 @@ class PoissonGINODataProcessor(DefaultDataProcessor):
        
        # no transformation needed for the cube of latent queries
         data_dict['latent_queries'] = data_dict['latent_queries'].to(self.device).squeeze(0)
+
+        y = data_dict["y"]
+
+        if isinstance(y, dict):
+            for k in y:
+                if y[k].ndim == 2:
+                    y[k] = y[k].unsqueeze(-1)
+        else:
+            if y.dim ==2:
+                y = y.unsqueeze(-1)
+        data_dict["y"] = y
+        
+        # if isinstance(data_dict["y"], dict):
+        #     data_dict["y"] = torch.cat([v for v in data_dict["y"].values()], dim=1)
+
 
         return data_dict
 
