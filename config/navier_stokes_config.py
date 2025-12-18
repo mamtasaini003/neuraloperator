@@ -3,12 +3,12 @@ from typing import Any, List, Optional
 from zencfg import ConfigBase
 from .distributed import DistributedConfig
 from .models import ModelConfig, FNO_Medium2d
-from .models import FNO_Latent_Small2d
+from .models import FNO_Latent_Medium2d
 from .opt import OptimizationConfig, PatchingConfig
 from .wandb import WandbConfig
 
 class NavierStokesOptConfig(OptimizationConfig):
-    n_epochs: int = 600
+    n_epochs: int = 200
     learning_rate: float = 3e-4
     training_loss: str = "h1"
     weight_decay: float = 1e-4
@@ -38,7 +38,7 @@ class Default(ConfigBase):
     wandb: WandbConfig = WandbConfig()
 
 class NavierStokesOptLatentConfig(OptimizationConfig):
-    n_epochs: int = 600
+    n_epochs: int = 200
     learning_rate: float = 3e-4
     training_loss: str = "h1"
     weight_decay: float = 1e-4
@@ -51,7 +51,7 @@ class DefaultLatent(ConfigBase):
     verbose: bool = True
     arch: str = "fno_latent"
     distributed: DistributedConfig = DistributedConfig()
-    model: ModelConfig = FNO_Latent_Small2d()
+    model: ModelConfig = FNO_Latent_Medium2d()
     opt: OptimizationConfig = NavierStokesOptLatentConfig()
     data: NavierStokesDatasetConfig = NavierStokesDatasetConfig()
     patching: PatchingConfig = PatchingConfig()
