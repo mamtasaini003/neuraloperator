@@ -14,7 +14,7 @@ class BurgersDatasetConfig(ConfigBase):
     test_batch_sizes: List[int] = [16]
     n_tests: List[int] = [400]
     # full res is 128x101. We redistribute a mini version at 16x17
-    spatial_length: int = 16 
+    spatial_length: int = 32 
     temporal_length: int = 17
     temporal_subsample: Optional[int] = None
     encode_input: bool = False
@@ -22,7 +22,7 @@ class BurgersDatasetConfig(ConfigBase):
     include_endpoint: List[bool] = [True, False]
 
 class BurgersOptConfig(ConfigBase):
-    n_epochs: int = 500
+    n_epochs: int = 100
     training_loss: str = "l2"
     testing_loss: str = "l2"
     learning_rate: float = 1e-4
@@ -35,7 +35,7 @@ class BurgersOptConfig(ConfigBase):
     gamma: float = 0.5
 
 class BurgersOptConfigLatent(ConfigBase):
-    n_epochs: int = 500
+    n_epochs: int = 100
     training_loss: str = "l2"
     testing_loss: str = "l2"
     learning_rate: float = 1e-4

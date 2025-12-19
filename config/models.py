@@ -48,7 +48,7 @@ class FNO_Small2d(SimpleFNOConfig):
     """
     data_channels: int = 1
     out_channels: int = 1
-    n_modes: List[int] = [16,16]
+    n_modes: List[int] = [16, 16]
     hidden_channels: int = 24
     projection_channel_ratio: int = 2
 

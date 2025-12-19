@@ -9,7 +9,7 @@ from .wandb import WandbConfig
 
 
 class DarcyOptConfig(OptimizationConfig):
-    n_epochs: int = 500
+    n_epochs: int = 100
     learning_rate: float = 5e-3
     training_loss: str = "h1"
     weight_decay: float = 1e-4
@@ -41,7 +41,7 @@ class Default(ConfigBase):
     wandb: WandbConfig = WandbConfig()
 
 class DarcyOptLatentConfig(OptimizationConfig):
-    n_epochs: int = 500
+    n_epochs: int = 100
     learning_rate: float = 5e-3
     training_loss: str = "h1"
     weight_decay: float = 1e-4
