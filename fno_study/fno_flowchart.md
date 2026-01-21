@@ -43,7 +43,7 @@ subgraph FNO_BLOCK_DETAIL ["FNOBlock Internal Flow"]
     SKIP["Skip Connection\nPurpose: Local information\nInput: (B, C, D1, ..., DN)\nOutput: (B, C, D1_out, ..., DN_out)"]
     class SKIP important
 
-    COMBINE["Combine\nPurpose: Merge spectral and local paths\nInput: Two tensors\nOutput: (B, C, D1_out, ..., DN_out)"]
+    COMBINE["Combine\nPurpose: Merge paths\nInput: Two tensors\nOutput: (B, C, D1_out, ..., DN_out)"]
 
     POST_NORM["Post-activation Norm\nPurpose: Stabilize training\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, normalized"]
 
@@ -73,11 +73,12 @@ FINAL_OUTPUT["Final Output\n(B, C_out, D1, ..., DN)"]
 class FINAL_OUTPUT output
 
 %% =========================
-%% Connections (FLOW)
+%% Connections (THIS creates the flowchart)
 %% =========================
 INPUT --> POS_EMB --> LIFT --> PAD --> FNO_BLOCKS
 FNO_BLOCKS --> FNO_BLOCK_DETAIL
 FNO_BLOCK_DETAIL --> UNPAD --> PROJ --> FINAL_OUTPUT
+
 
 %% =========================
 %% Legend
