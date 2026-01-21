@@ -1,85 +1,67 @@
 flowchart TD
-    %% Define styles
-    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
-    classDef output fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
-    classDef important fill:#fff3e0,stroke:#e65100,stroke-width:3px
-    
-    %% Input
-    INPUT["Input: x\n(B, C_in, D1, ..., D)"]
-    class INPUT input
-    
-    %% SimpleFNO Main Flow
-    POS_EMB["Positional Embedding\nPurpose: Add spatial coordinates\nInput: (B, C_in, D1, ..., DN)\nOutput: (B, C_in + n_dim, D1, ..., DN)"]
-    class POS_EMB process
-    
-    LIFT["Lifting Layer\nPurpose: Project to hidden dimension\nInput: (B, C_in + n_dim, D1, ..., DN)\nOutput: (B, hidden_channels, D1, ..., DN)"]
-    class LIFT process
-    
-    PAD["Domain Padding\nPurpose: Handle boundary conditions\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, hidden_channels, D1+pad, ..., DN+pad)"]
-    class PAD process
-    
-    %% FNO Blocks
-    FNO_BLOCKS["FNO Blocks x n_layers\nPurpose: Core spectral processing\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, hidden_channels, D1_out, ..., DN_out)"]
-    class FNO_BLOCKS important
-    
-    %% FNOBlock detailed flow
-    subgraph FNO_BLOCK_DETAIL ["FNOBlock Internal Flow"]
-        direction LR
-        
-        PRE_NORM["Preactivation Norm\nPurpose: Stabilize training\nInput: (B, C, D1, ..., DN)\nOutput: Same, normalized"]
-        
-        SPECTRAL["Spectral Convolution\nPurpose: Global FFT processing\nInput: (B, C, D1, ..., DN)\nOutput: (B, C, D1_out, ..., DN_out)"]
-        class SPECTRAL important
-        
-        SKIP["Skip Connection\nPurpose: Local information\nInput: (B, C, D1, ..., DN)\nOutput: (B, C, D1_out, ..., DN_out)"]
-        class SKIP important
-        
-        COMBINE["Combine\nPurpose: Merge paths\nInput: Two tensors\nOutput: (B, C, D1_out, ..., DN_out)"]
-        
-        POST_NORM["Post-activation Norm\nPurpose: Stabilize training\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, normalized"]
-        
-        ACTIVATION["Activation\nPurpose: Non-linearity\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, activated"]
-        
-        CHANNEL_MLP["Channel MLP\nPurpose: Channel mixing\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, mixed"]
-        
-        PRE_NORM --> SPECTRAL
-        PRE_NORM --> SKIP
-        SPECTRAL --> COMBINE
-        SKIP --> COMBINE
-        COMBINE --> POST_NORM
-        POST_NORM --> ACTIVATION
-        ACTIVATION --> CHANNEL_MLP
-    end
-    
-    UNPAD["Unpadding\nPurpose: Remove padding\nInput: (B, hidden_channels, D1+pad, ..., DN+pad)\nOutput: (B, hidden_channels, D1, ..., DN)"]
-    class UNPAD process
-    
-    PROJ["Projection Layer\nPurpose: Project to output\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, C_out, D1, ..., DN)"]
-    class PROJ process
-    
-    FINAL_OUTPUT["Final Output\n(B, C_out, D1, ..., DN)"]
-    class FINAL_OUTPUT output
-    
-    %% Connections
-    INPUT --> POS_EMB
-    POS_EMB --> LIFT
-    LIFT --> PAD
-    PAD --> FNO_BLOCKS
-    FNO_BLOCKS --> FNO_BLOCK_DETAIL
-    FNO_BLOCK_DETAIL --> UNPAD
-    UNPAD --> PROJ
-    PROJ --> FINAL_OUTPUT
-    
-    %% Legend
-    subgraph LEGEND ["Legend"]
-        direction LR
-        INPUT_EX["Input Data"]
-        class INPUT_EX input
-        PROCESS_EX["Processing Step"]
-        class PROCESS_EX process
-        OUTPUT_EX["Output Data"]
-        class OUTPUT_EX output
-        IMPORTANT_EX["Critical Step"]
-        class IMPORTANT_EX important
-    end
+
+%% Define styles
+classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+classDef process fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+classDef output fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+classDef important fill:#fff3e0,stroke:#e65100,stroke-width:3px
+
+%% Input
+INPUT["Input: x\n(B, C_in, D1, ..., D)"]
+class INPUT input
+
+%% SimpleFNO Main Flow
+POS_EMB["Positional Embedding\nPurpose: Add spatial coordinates\nInput: (B, C_in, D1, ..., DN)\nOutput: (B, C_in + n_dim, D1, ..., DN)"]
+class POS_EMB process
+
+LIFT["Lifting Layer\nPurpose: Project to hidden dimension\nInput: (B, C_in + n_dim, D1, ..., DN)\nOutput: (B, hidden_channels, D1, ..., DN)"]
+class LIFT process
+
+PAD["Domain Padding\nPurpose: Handle boundary conditions\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, hidden_channels, D1+pad, ..., DN+pad)"]
+class PAD process
+
+%% FNO Blocks
+FNO_BLOCKS["FNO Blocks x n_layers\nPurpose: Core spectral processing\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, hidden_channels, D1_out, ..., DN_out)"]
+class FNO_BLOCKS important
+
+%% FNOBlock detailed flow
+subgraph FNO_BLOCK_DETAIL ["FNOBlock Internal Flow"]
+    direction LR
+
+    PRE_NORM["Preactivation Norm\nPurpose: Stabilize training\nInput: (B, C, D1, ..., DN)\nOutput: Same, normalized"]
+
+    SPECTRAL["Spectral Convolution\nPurpose: Global FFT processing\nInput: (B, C, D1, ..., DN)\nOutput: (B, C, D1_out, ..., DN_out)"]
+    class SPECTRAL important
+
+    SKIP["Skip Connection\nPurpose: Local information\nInput: (B, C, D1, ..., DN)\nOutput: (B, C, D1_out, ..., DN_out)"]
+    class SKIP important
+
+    COMBINE["Combine\nPurpose: Merge paths\nInput: Two tensors\nOutput: (B, C, D1_out, ..., DN_out)"]
+
+    POST_NORM["Post-activation Norm\nPurpose: Stabilize training\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, normalized"]
+
+    ACTIVATION["Activation\nPurpose: Non-linearity\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, activated"]
+
+    CHANNEL_MLP["Channel MLP\nPurpose: Channel mixing\nInput: (B, C, D1_out, ..., DN_out)\nOutput: Same, mixed"]
+
+    PRE_NORM --> SPECTRAL
+    PRE_NORM --> SKIP
+    SPECTRAL --> COMBINE
+    SKIP --> COMBINE
+    COMBINE --> POST_NORM
+    POST_NORM --> ACTIVATION
+    ACTIVATION --> CHANNEL_MLP
+end
+
+UNPAD["Unpadding\nPurpose: Remove padding\nInput: (B, hidden_channels, D1+pad, ..., DN+pad)\nOutput: (B, hidden_channels, D1, ..., DN)"]
+class UNPAD process
+
+PROJ["Projection Layer\nPurpose: Project to output\nInput: (B, hidden_channels, D1, ..., DN)\nOutput: (B, C_out, D1, ..., DN)"]
+class PROJ process
+
+FINAL_OUTPUT["Final Output\n(B, C_out, D1, ..., DN)"]
+class FINAL_OUTPUT output
+
+%% Connections
+INPUT --> POS_EMB --> LIFT --> PAD --> FNO_BLOCKS
+FNO_BLOCKS --> FNO_BLOCK_DETAIL --> UNPAD --> PROJ --> FINAL_OUTPUT
