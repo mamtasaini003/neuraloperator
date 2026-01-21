@@ -9,11 +9,11 @@ graph TD
     classDef important fill:#fff3e0,stroke:#e65100,stroke-width:3px
     
     %% Input
-    INPUT[Input: x<br/>(B, C_in, D1, ..., DN)]
+    INPUT["Input: x\n(B, C_in, D1, ..., D)"]
     class INPUT input
     
     %% SimpleFNO Main Flow
-    POS_EMB[Positional Embedding<br/>Purpose: Add spatial coordinates<br/>Input: (B, C_in, D1, ..., DN)<br/>Output: (B, C_in+n_dim, D1, ..., DN)]
+    POS_EMB[Positional Embedding<br/>Purpose: Add spatial coordinates<br/>Input: \n(B, C_in, D1, ..., DN)<br/>Output: (B, C_in+n_dim, D1, ..., DN)]
     class POS_EMB process
     
     LIFT[Lifting Layer<br/>Purpose: Project to hidden dimension<br/>Input: (B, C_in+n_dim, D1, ..., DN)<br/>Output: (B, hidden_channels, D1, ..., DN)]
